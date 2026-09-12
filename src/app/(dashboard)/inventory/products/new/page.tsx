@@ -50,49 +50,6 @@ export default function AddProductPage() {
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.error || 'Failed to create product');
-      router.push('/inventory');
-    } catch (err) {
-        <Card>
-          <CardHeader><CardTitle>Pricing & Stock</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div><label className="text-sm font-medium mb-1 block">Cost Price *</label><Input type="number" step="0.01" value={form.costPrice} onChange={e => setForm({ ...form, costPrice: e.target.value })} required /></div>
-              <div><label className="text-sm font-medium mb-1 block">Selling Price *</label><Input type="number" step="0.01" value={form.sellingPrice} onChange={e => setForm({ ...form, sellingPrice: e.target.value })} required /></div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div><label className="text-sm font-medium mb-1 block">Reorder Level</label><Input type="number" value={form.reorderLevel} onChange={e => setForm({ ...form, reorderLevel: e.target.value })} /></div>
-              <div><label className="text-sm font-medium mb-1 block">Initial Stock</label><Input type="number" value={form.initialStock} onChange={e => setForm({ ...form, initialStock: e.target.value })} /></div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between"><CardTitle>Variants</CardTitle><Button type="button" variant="outline" size="sm" onClick={addVariant}><Plus className="h-4 w-4 mr-1" /> Add Variant</Button></CardHeader>
-          <CardContent className="space-y-4">
-            {variants.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">No variants. Click &quot;Add Variant&quot; for size/color options.</p> : variants.map((variant, idx) => (
-              <div key={idx} className="grid grid-cols-6 gap-2 items-end p-3 border rounded-lg">
-                <div><label className="text-xs font-medium">SKU</label><Input value={variant.sku} onChange={e => updateVariant(idx, 'sku', e.target.value)} className="h-8" /></div>
-                <div><label className="text-xs font-medium">Size</label><Input value={variant.size} onChange={e => updateVariant(idx, 'size', e.target.value)} className="h-8" placeholder="S/M/L" /></div>
-                <div><label className="text-xs font-medium">Color</label><Input value={variant.color} onChange={e => updateVariant(idx, 'color', e.target.value)} className="h-8" /></div>
-                <div><label className="text-xs font-medium">Material</label><Input value={variant.material} onChange={e => updateVariant(idx, 'material', e.target.value)} className="h-8" /></div>
-                <div><label className="text-xs font-medium">Extra Cost</label><Input type="number" step="0.01" value={variant.additionalCost} onChange={e => updateVariant(idx, 'additionalCost', e.target.value)} className="h-8" /></div>
-                <Button type="button" variant="ghost" size="icon" onClick={() => removeVariant(idx)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-        {error && <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">{error}</div>}
-        <div className="flex justify-end gap-4"><Link href="/inventory"><Button variant="outline" type="button">Cancel</Button></Link><Button type="submit" disabled={loading}>{loading ? 'Creating...' : 'Create Product'}</Button></div>
-      </form>
-    </div>
-  );
-}
-
-      setError(err instanceof Error ? err.message : 'Failed to create product');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-4">
@@ -111,3 +68,45 @@ export default function AddProductPage() {
             <div><label className="text-sm font-medium mb-1 block">Image URL</label><Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://..." /></div>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader><CardTitle>Pricing & Stock</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div><label className="text-sm font-medium mb-1 block">Cost Price *</label><Input type="number" step="0.01" value={form.costPrice} onChange={e => setForm({ ...form, costPrice: e.target.value })} required /></div>
+              <div><label className="text-sm font-medium mb-1 block">Selling Price *</label><Input type="number" step="0.01" value={form.sellingPrice} onChange={e => setForm({ ...form, sellingPrice: e.target.value })} required /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><label className="text-sm font-medium mb-1 block">Reorder Level</label><Input type="number" value={form.reorderLevel} onChange={e => setForm({ ...form, reorderLevel: e.target.value })} /></div>
+              <div><label className="text-sm font-medium mb-1 block">Initial Stock</label><Input type="number" value={form.initialStock} onChange={e => setForm({ ...form, initialStock: e.target.value })} /></div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between"><CardTitle>Variants</CardTitle><Button type="button" variant="outline" size="sm" onClick={addVariant}><Plus className="h-4 w-4 mr-1" /> Add Variant</Button></CardHeader>
+          <CardContent className="space-y-4">
+            {variants.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">No variants. Click Add Variant for size/color options.</p> : variants.map((variant, idx) => (
+              <div key={idx} className="grid grid-cols-6 gap-2 items-end p-3 border rounded-lg">
+                <div><label className="text-xs font-medium">SKU</label><Input value={variant.sku} onChange={e => updateVariant(idx, 'sku', e.target.value)} className="h-8" /></div>
+                <div><label className="text-xs font-medium">Size</label><Input value={variant.size} onChange={e => updateVariant(idx, 'size', e.target.value)} className="h-8" placeholder="S/M/L" /></div>
+                <div><label className="text-xs font-medium">Color</label><Input value={variant.color} onChange={e => updateVariant(idx, 'color', e.target.value)} className="h-8" /></div>
+                <div><label className="text-xs font-medium">Material</label><Input value={variant.material} onChange={e => updateVariant(idx, 'material', e.target.value)} className="h-8" /></div>
+                <div><label className="text-xs font-medium">Extra Cost</label><Input type="number" step="0.01" value={variant.additionalCost} onChange={e => updateVariant(idx, 'additionalCost', e.target.value)} className="h-8" /></div>
+                <Button type="button" variant="ghost" size="icon" onClick={() => removeVariant(idx)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+        {error && <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">{error}</div>}
+        <div className="flex justify-end gap-4"><Link href="/inventory"><Button variant="outline" type="button">Cancel</Button></Link><Button type="submit" disabled={loading}>{loading ? 'Creating...' : 'Create Product'}</Button></div>
+      </form>
+    </div>
+  );
+}
+
+      router.push('/inventory');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create product');
+    } finally {
+      setLoading(false);
+    }
+  };
