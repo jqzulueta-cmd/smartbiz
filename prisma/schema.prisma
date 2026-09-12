@@ -1,0 +1,203 @@
+// SmartBiz — Complete Database Schema
+// PostgreSQL with Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  CASHIER
+}
+
+enum PaymentMethod {
+  CASH
+  GCASH
+  PAYMAYA
+  CARD
+}
+
+enum TransferStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model Branch {
+  id            String   @id @default(cuid())
+  locationName  String   @map("location_name")
+  address       String
+  phone         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  users         User[]
+  inventory     Inventory[]
+  sales         Sale[]
+  transfersFrom StockTransfer[] @relation("SourceBranch")
+  transfersTo   StockTransfer[] @relation("TargetBranch")
+
+  @@map("branches")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  role          Role     @default(CASHIER)
+  branchId      String?  @map("branch_id")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  branch        Branch?  @relation(fields: [branchId], references: [id])
+  sales         Sale[]
+  transfers     StockTransfer[] @relation("TransferRequestedBy")
+
+  @@map("users")
+}
+
+model Category {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  description   String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  products      Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  barcode       String   @unique
+  name          String
+  description   String?
+  categoryId    String?  @map("category_id")
+  costPrice     Decimal  @map("cost_price") @db.Decimal(10, 2)
+  sellingPrice  Decimal  @map("selling_price") @db.Decimal(10, 2)
+  reorderLevel  Int      @default(10) @map("reorder_level")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  category      Category?       @relation(fields: [categoryId], references: [id])
+  variants      ProductVariant[]
+  images        ProductImage[]
+  inventory     Inventory[]
+  saleItems     SaleItem[]
+  transfers     StockTransfer[]
+
+  @@map("products")
+
+model ProductVariant {
+  id            String   @id @default(cuid())
+  productId     String   @map("product_id")
+  sku           String   @unique
+  size          String?
+  color         String?
+  material      String?
+  additionalCost Decimal @default(0) @map("additional_cost") @db.Decimal(10, 2)
+  stockQuantity Int      @default(0) @map("stock_quantity")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id            String   @id @default(cuid())
+  productId     String   @map("product_id")
+  url           String
+  altText       String?  @map("alt_text")
+  isPrimary     Boolean  @default(false) @map("is_primary")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+model Inventory {
+  id            String   @id @default(cuid())
+  productId     String   @map("product_id")
+  branchId      String   @map("branch_id")
+  quantity      Int      @default(0)
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  product       Product  @relation(fields: [productId], references: [id])
+  branch        Branch   @relation(fields: [branchId], references: [id])
+
+  @@unique([productId, branchId])
+  @@map("inventory")
+}
+
+model Sale {
+  id            String   @id @default(cuid())
+  invoiceNumber String   @unique @map("invoice_number")
+  cashierId     String   @map("cashier_id")
+  branchId      String   @map("branch_id")
+  subtotal      Decimal  @db.Decimal(10, 2)
+  taxAmount     Decimal  @map("tax_amount") @db.Decimal(10, 2)
+  discountAmount Decimal @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  totalAmount   Decimal  @map("total_amount") @db.Decimal(10, 2)
+  paymentMethod PaymentMethod @map("payment_method")
+  amountTendered Decimal? @map("amount_tendered") @db.Decimal(10, 2)
+  changeGiven   Decimal? @map("change_given") @db.Decimal(10, 2)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  cashier       User     @relation(fields: [cashierId], references: [id])
+  branch        Branch   @relation(fields: [branchId], references: [id])
+  items         SaleItem[]
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id            String   @id @default(cuid())
+  saleId        String   @map("sale_id")
+  productId     String   @map("product_id")
+  productName   String   @map("product_name")
+  quantity      Int
+  unitPrice     Decimal  @map("unit_price") @db.Decimal(10, 2)
+  totalPrice    Decimal  @map("total_price") @db.Decimal(10, 2)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  sale          Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product       Product  @relation(fields: [productId], references: [id])
+
+  @@map("sale_items")
+}
+
+model StockTransfer {
+  id            String   @id @default(cuid())
+  sourceBranchId String  @map("source_branch_id")
+  targetBranchId String  @map("target_branch_id")
+  productId     String   @map("product_id")
+  quantity      Int
+  status        TransferStatus @default(PENDING)
+  requestedById String   @map("requested_by_id")
+  approvedById  String?  @map("approved_by_id")
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  sourceBranch  Branch   @relation("SourceBranch", fields: [sourceBranchId], references: [id])
+  targetBranch  Branch   @relation("TargetBranch", fields: [targetBranchId], references: [id])
+  product       Product  @relation(fields: [productId], references: [id])
+  requestedBy   User     @relation("TransferRequestedBy", fields: [requestedById], references: [id])
+
+  @@map("stock_transfers")
+}
+
+}
